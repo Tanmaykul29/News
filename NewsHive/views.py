@@ -1,15 +1,20 @@
+import datetime
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from .models import User, FavoriteNews
+from .models import User, FavoriteNews, Comment
 import requests
+from .forms import CommentForm, EditCommentForm
 from slugify import slugify
 
+
 def index(request):
-    return render(request, "index.html")
+    comments = Comment.objects.all()
+    return render(request, "index.html", {"comments": comments})
 
 
 NEWS_API_URL = "https://newsapi.org/v2/top-headlines"
@@ -90,41 +95,12 @@ def register(request):
         return render(request, "register.html")
 
 
-# def get_article_by_title(title):
-#     # Loop through the list of articles to find the one with a matching title
-#     for article in Global_articles:
-#         if article['title'] == title:
-#             return article
-#
-#     # If no matching article is found, return None or handle accordingly
-#     return None
-
-
-# def save_to_favorites(request, title_slug):
-#     if request.user.is_authenticated:
-#         title = title_slug.replace('-', ' ')  # Convert the slug back to the original title
-#         article = get_article_by_title(title)  # Implement this function to fetch the article by title
-#         if article:
-#             FavoriteNews.objects.create(
-#                 user=request.user,
-#                 title=article['title'],
-#                 description=article['description'],
-#                 image_url=article['urlToImage'],
-#                 article_url=article['url'],
-#             )
-#             print(f"\n\nThe saved news is: title: {{title}}\n\n")
-#     return redirect('news')  # Redirect to the news list page
-
 @login_required()
 def save_to_favorites(request, title_slug):
     if request.user.is_authenticated:
-        # title = title_slug.replace('-', ' ')  # Convert the slug back to the original title
-        # article = get_article_by_title(title_slug)  # Implement this function to fetch the article by title
-
         for article in global_articles:
             tp = article['title']
-            txt = slugify(tp)
-            if txt == title_slug:
+            if tp == title_slug:
                 fnews = FavoriteNews()
                 fnews.title = article['title']
                 fnews.description = article['description']
@@ -133,18 +109,8 @@ def save_to_favorites(request, title_slug):
                 fnews.user = request.user
                 fnews.save()
 
-        # if article:
-        #     fnews = FavoriteNews()
-        #     fnews.title = article['title']
-        #     fnews.description = article['description']
-        #     fnews.image_url = article['urlToImage']
-        #     fnews.article_url = article['url']
-        #     fnews.user = request.user
-        #     fnews.save()
-        #     return HttpResponseRedirect(reverse('favorites'))
-        # return render(request, 'favorites.html', {'article': article, 'title': title_slug, 'global_articles':global_articles})
-
     return redirect('news')  # Redirect to the news list page
+
 
 @login_required()
 def favorites(request):
@@ -167,6 +133,42 @@ def remove_from_favorites(request, favorite_id):
 
     return redirect('favorites')
 
+
+@login_required
+def add_comment(request):
+    if request.method == "POST":
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.user = request.user
+            comment.save()
+            return redirect("index")
+    else:
+        form = CommentForm()
+    return render(request, "index.html", {"form": form})
+
+
+@login_required
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id, user=request.user)
+    if comment.user == request.user:
+        comment.delete()
+    return redirect('index')
+
+
+@login_required()
+def edit_comment(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+
+    if request.method == "POST":
+        form = EditCommentForm(request.POST, instance=comment)
+        if form.is_valid():
+            form.save()
+            return redirect("index")
+    else:
+        form = EditCommentForm(instance=comment)
+
+    return render(request, "edit_comment.html", {"form": form, "comment": comment})
 
 # python manage.py makemigrations NewsHive
 # python3 manage.py migrate

@@ -5,6 +5,7 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="../static/assets/css/main.css" />
+		<link rel="icon" href="../static/images/news.png">
 	</head>
 	<body class="homepage is-preload">
 		<div id="page-wrapper">
@@ -24,7 +25,7 @@
 								<li><a href="favorites">Favorites</a></li>
 								{% else %}
 								<li><a href="login">Log in</a></li>
-								<li><a href="signup">Sign up</a></li>
+								<li><a href="register">Sign up</a></li>
 								{% endif %}
 
 							</ul>
@@ -33,6 +34,7 @@
 					<!-- Banner -->
 						<section id="banner">
 							<header>
+								<center><img src="../static/images/bnews.gif" style="width:100%;height:500px"></center>
 								<h2>Stay Informed, Stay Ahead, Stay Live!</h2>
 								<p>Catch Every Buzz in Real Time with NewsHive!</p>
 							</header>
@@ -88,12 +90,53 @@
 							
 						</section>
 
+					<div class="container" style="margin-top:5%;margin-bottom:5%">
+							<header>
+								<center><img src="../static/images/bn.gif" style="width:100%;height:500px"></center>
+							</header>
+					</div>
+
+					<div class="container">
+						<h2 style="text-align:center;font-family: 'Source Sans Pro';margin-bottom:5%"><i>People's opinions:</i></h2>
+						{% if comments %}
+							<div class="row" style="margin:auto">
+							{% for comment in comments %}
+								<div class="card" style="background-color:#ffffff;width: 31%;margin-bottom:5%;margin-right:2%;border:2px solid #000">
+								  <div class="card-body">
+									<h5 class="card-title">{{comment.title}}</h5>
+									<p class="card-text">{{comment.description}}</p>
+									<p>Posted by: {{ comment.user.username }}</p>
+									<p>Posted on: {{ comment.timestamp }}</p>
+									{% if user.is_authenticated and user == comment.user %}
+									  <a href="{% url 'edit_comment' comment.id %}" style="margin-right:3%"><i class="fas fa-edit fa-lg" style="color: #000000;"></i></a>
+									  <a href="{% url 'delete_comment' comment.id %}"><i class="fas fa-trash fa-lg" style="color:#000000"></i></a>
+								    {% endif %}
+								  </div>
+								</div>
+
+							{% endfor %}
+							</div>
+						{% else %}
+							<h1>Be the first one to share your opinion.</h1>
+						{% endif %}
+						<hr style="height:3px;border:none;color:#333;background-color:#333;">
+
+						<!-- Add New Comment Form (Only for Logged-in Users) -->
+						{% if user.is_authenticated %}
+							<form method="post" action="{% url 'add_comment' %}">
+								{% csrf_token %}
+								<label for="title" class="form-label">Title:</label>
+								<input type="text" name="title" required>
+								<br>
+								<label for="description" class="form-label">Description:</label>
+								<textarea name="description" rows="3" cols="40" required></textarea>
+								<br>
+								<input type="submit" value="Add Comment" style="font-size:16px;width:12%;padding:8px">
+							</form>
+						{% endif %}
+					</div>
+
 				</section>
-
-			{% if user.is_authenticated %}
-
-			{% else %}
-			{% endif %}
 
 			<!-- Footer -->
 				<div id="footer" style="background-color: #676767">
