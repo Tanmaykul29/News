@@ -170,7 +170,7 @@ def edit_comment(request, comment_id):
 
     return render(request, "edit_comment.html", {"form": form, "comment": comment})
 
-# python manage.py makemigrations NewsHive
+# python3 manage.py makemigrations NewsHive
 # python3 manage.py migrate
 # python3 manage.py runserver
 
